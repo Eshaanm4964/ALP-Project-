@@ -1,14 +1,59 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { UserProfile, ChatMessage, AgentName } from '../types';
 import { chatWithMediGenie, prescriptionSafetyAgent } from '../geminiService';
 import { 
   Send, User, ShieldCheck, Info, Loader2, Search, 
-  ExternalLink, Mic, MicOff, Image as ImageIcon, X, AlertCircle,
+  ExternalLink, Mic, MicOff, ImageIcon, X, AlertCircle,
   BrainCircuit, Library, ShieldAlert, ClipboardCheck, Lock, Pill, AlertTriangle,
   RefreshCcw, Cpu, Sparkles, Database, Microscope, Globe, Banknote, Tag, ShoppingCart,
   Layers, Dna, Activity, Workflow, Zap, Scan, ShieldAlert as ShieldWarning
 } from 'lucide-react';
+
+const MEDICAL_TERMS = [
+  'Aspirin', 'Penicillin', 'Metformin', 'Amoxicillin', 'Ibuprofen', 'Atorvastatin', 'Lisinopril', 
+  'Omeprazole', 'Insulin', 'Levothyroxine', 'Albuterol', 'Amlodipine', 'Sertraline', 'Losartan',
+  'Immunotherapy', 'Chemotherapy', 'Dialysis', 'Angioplasty', 'Vaccination', 'Gene Therapy', 
+  'Stem Cell', 'Radiotherapy', 'Endoscopy', 'Laparoscopy', 'Detox', 'Rehab', 'CRISPR',
+  'Homeostasis', 'Metabolism', 'Cardiology', 'Neurology', 'Oncology', 'Pediatrics', 'Antibiotics',
+  'Diagnostics', 'Synthesis', 'Biosync', 'Trauma Care', 'Pharma', 'Clinical Trial', 'Pathology'
+];
+
+const MedicalParticleField = () => {
+  const particles = useMemo(() => {
+    return Array.from({ length: 40 }).map((_, i) => ({
+      id: i,
+      term: MEDICAL_TERMS[i % MEDICAL_TERMS.length],
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 10}s`,
+      duration: `${15 + Math.random() * 20}s`,
+      fontSize: `${10 + Math.random() * 12}px`,
+      opacity: 0.05 + Math.random() * 0.1,
+    }));
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 select-none">
+      {particles.map(p => (
+        <div
+          key={p.id}
+          className="absolute whitespace-nowrap font-black uppercase tracking-widest text-slate-900 animate-revolve italic"
+          style={{
+            top: p.top,
+            left: p.left,
+            animationDelay: p.delay,
+            animationDuration: p.duration,
+            fontSize: p.fontSize,
+            opacity: p.opacity,
+          }}
+        >
+          {p.term}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const AgentBadge = ({ name, isLearning }: { name: AgentName, isLearning?: boolean }) => {
   const getIcon = () => {
@@ -45,8 +90,8 @@ const AgentBadge = ({ name, isLearning }: { name: AgentName, isLearning?: boolea
         <span className="italic">{name}</span>
       </div>
       {isLearning && (
-        <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 uppercase tracking-tighter italic">
-          <Workflow size={10} className="animate-spin" /> Learning Loop Active
+        <div className="flex items-center gap-1.5 text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100 uppercase tracking-tighter italic animate-pulse shadow-sm">
+          <AlertCircle size={10} className="animate-spin-slow" /> Low Confidence / Learning
         </div>
       )}
     </div>
@@ -237,9 +282,12 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-5xl mx-auto border glass rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in duration-700">
+    <div className="flex flex-col h-full max-w-5xl mx-auto border glass rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in duration-700 relative">
+      {/* Dynamic Background during typing */}
+      {isTyping && <MedicalParticleField />}
+      
       {/* Header */}
-      <div className="bg-slate-900 p-7 text-white flex items-center justify-between border-b border-white/5">
+      <div className="bg-slate-900 p-7 text-white flex items-center justify-between border-b border-white/5 relative z-10">
         <div className="flex items-center gap-5">
           <div className="w-14 h-14 bg-blue-600 rounded-[1.25rem] flex items-center justify-center shadow-[0_0_30px_-5px_rgba(37,99,235,0.6)] rotate-6 border border-white/20">
             <ShieldCheck className="w-8 h-8 text-white" />
@@ -266,7 +314,7 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
       </div>
 
       {/* Prominent Medical Disclaimer Banner */}
-      <div className="bg-amber-50 border-b border-amber-200 px-8 py-4 flex items-center gap-4 animate-in slide-in-from-top-4 duration-500">
+      <div className="bg-amber-50 border-b border-amber-200 px-8 py-4 flex items-center gap-4 animate-in slide-in-from-top-4 duration-500 relative z-10">
         <div className="bg-amber-500 p-2 rounded-xl text-white shrink-0 shadow-lg shadow-amber-200/50">
           <ShieldWarning size={20} />
         </div>
@@ -284,7 +332,7 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-10 space-y-12 bg-slate-50/10 scroll-smooth" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-10 space-y-12 bg-slate-50/10 scroll-smooth relative z-10" ref={scrollRef}>
         {messages?.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-5 duration-500`}>
             <div className={`flex gap-6 max-w-[92%] ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -298,14 +346,23 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                 <div className={`p-8 rounded-[2.5rem] shadow-sm space-y-5 relative overflow-hidden transition-all ${
                   m.role === 'user' 
                   ? 'bg-slate-900 text-white rounded-tr-none' 
-                  : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
+                  : `bg-white text-slate-800 rounded-tl-none border border-slate-100 ${m.confidence === 'Low' ? 'ring-2 ring-rose-500/20' : ''}`
                 }`}>
+                  {m.confidence === 'Low' && m.role === 'model' && (
+                    <div className="flex items-center gap-2 mb-4 bg-rose-50 p-3 rounded-2xl border border-rose-100 animate-pulse">
+                      <AlertCircle className="text-rose-500 shrink-0" size={18} />
+                      <p className="text-[11px] font-black text-rose-600 uppercase tracking-widest italic leading-tight">
+                        Experimental Reasoning Active: Clinical evidence requested.
+                      </p>
+                    </div>
+                  )}
+
                   {m.image && (
                     <div className="rounded-[1.75rem] overflow-hidden mb-6 border-2 border-white/5 shadow-2xl">
                       <img src={m.image} alt="Clinical Visual Input" className="w-full h-auto object-cover max-h-[500px]" />
                     </div>
                   )}
-                  <p className={`text-lg leading-relaxed whitespace-pre-wrap font-bold italic tracking-tight ${m.confidence === 'Low' ? 'text-indigo-600' : ''}`}>{m.text}</p>
+                  <p className={`text-lg leading-relaxed whitespace-pre-wrap font-bold italic tracking-tight ${m.confidence === 'Low' && m.role === 'model' ? 'text-rose-800' : ''}`}>{m.text}</p>
                   
                   {m.recommendation && <PrescriptionCard rec={m.recommendation} />}
 
@@ -337,7 +394,7 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
 
         {/* --- SOPHISTICATED AGENTIC LOADING INDICATOR --- */}
         {isTyping && (
-          <div className="flex justify-start animate-in fade-in zoom-in-95 duration-500">
+          <div className="flex justify-start animate-in fade-in zoom-in-95 duration-500 relative z-10">
             <div className="flex gap-6 items-start">
               <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 shadow-xl flex items-center justify-center text-blue-600 relative overflow-hidden">
                 <div className="absolute inset-0 bg-blue-50/50 animate-pulse"></div>
@@ -408,7 +465,7 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
       </div>
 
       {/* Command Buffer */}
-      <div className="p-8 bg-white border-t border-slate-100">
+      <div className="p-8 bg-white border-t border-slate-100 relative z-10">
         <div className="flex items-center gap-5 max-w-5xl mx-auto">
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -476,6 +533,16 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
         }
         .animate-spin-slow {
           animation: spin 6s linear infinite;
+        }
+        @keyframes revolve {
+          0% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(100px, 50px) rotate(90deg); }
+          50% { transform: translate(50px, 150px) rotate(180deg); }
+          75% { transform: translate(-80px, 70px) rotate(270deg); }
+          100% { transform: translate(0, 0) rotate(360deg); }
+        }
+        .animate-revolve {
+          animation: revolve linear infinite;
         }
         @keyframes spin {
           from { transform: rotate(0deg); }

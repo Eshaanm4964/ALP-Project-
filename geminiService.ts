@@ -4,30 +4,28 @@ import { UserProfile, TriageStep, CarePathway, AgentName, FollowUpLog, DigitalTw
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const SAFETY_INSTRUCTIONS = `
+const GET_SAFETY_INSTRUCTIONS = (lang: string = 'English') => `
   STRICT SAFETY RULES:
   - NEVER state a definitive diagnosis.
-  - ALWAYS include: "This is not medical advice. Consult a doctor."
+  - ALWAYS include: "This is not medical advice. Consult a doctor." (Translate this to ${lang}).
   - If "Emergency" risk is detected, stop all other logic and insist on calling emergency services.
   - Disclaimer: "MediGenie recommendations are for informational purposes only. Do not exceed specified dosages."
   - ACTIVE LEARNING: If you are unsure about a clinical interpretation, DO NOT GUESS. Instead, ask the user a specific, clarifying medical question to reduce uncertainty.
+  - LANGUAGE RULE: You MUST respond entirely in ${lang}.
 `;
 
-// 1. Twin Architect Agent: Updates the Digital Twin model based on logs and interactions
+// 1. Twin Architect Agent
 export const updateDigitalTwinAgent = async (profile: UserProfile, logs: FollowUpLog[]): Promise<DigitalTwin> => {
   const systemInstruction = `
     You are the Twin Architect Agent. 
-    Your task is to maintain a "Patient Digital Twin" (a JSON-based computational model).
-    Based on the profile and logs, update the vital trajectories, medication responses, and equilibrium status.
-    LEARNING PATH: If data is missing for a specific trajectory (e.g. Heart Rate), mark the equilibriumStatus as 'Awaiting Data Signal'.
+    Maintain a "Patient Digital Twin".
+    LANGUAGE RULE: Output text fields in equilibriumStatus in ${profile.preferredLanguage}.
     Return ONLY valid JSON matching the DigitalTwin interface.
   `;
 
   const prompt = `
     Current Profile: ${JSON.stringify(profile)}
     History Logs: ${JSON.stringify(logs)}
-    
-    Construct an updated DigitalTwin model. Focus on extracting numerical trends from text notes.
   `;
 
   const response = await ai.models.generateContent({
@@ -39,20 +37,13 @@ export const updateDigitalTwinAgent = async (profile: UserProfile, logs: FollowU
   return JSON.parse(response.text || '{}');
 };
 
-// 2. Counterfactual Simulator Agent (What-If Engine)
+// 2. Counterfactual Simulator
 export const simulateCounterfactualAgent = async (twin: DigitalTwin, profile: UserProfile, scenario: string) => {
   const systemInstruction = `
-    You are the Counterfactual Simulator Agent (Decision Intelligence Engine).
-    Task: Use the Patient Digital Twin to simulate health outcomes for specific "What-If" scenarios.
-    
-    CRITICAL INSTRUCTION: Focus on outputting "Risk Deltas" (the change in risk profile) rather than direct medical advice.
-    For example: "Simulating a 2-hour sleep increase suggests a 15% reduction in metabolic strain over 14 days."
-    
-    STRICT RULES:
-    - Simulate multiple potential future trajectories.
-    - Output quantitative risk shifts.
-    - Maintain clinical neutrality.
-    ${SAFETY_INSTRUCTIONS}
+    You are the Counterfactual Simulator Agent.
+    Respond in ${profile.preferredLanguage}.
+    Focus on "Risk Deltas".
+    ${GET_SAFETY_INSTRUCTIONS(profile.preferredLanguage)}
   `;
 
   const prompt = `
@@ -70,30 +61,19 @@ export const simulateCounterfactualAgent = async (twin: DigitalTwin, profile: Us
   return response.text;
 };
 
-// 3. Prescription Safety Agent with Pricing & Grounding
+// 3. Prescription Safety Agent
 export const prescriptionSafetyAgent = async (query: string, userProfile: UserProfile) => {
   const systemInstruction = `
     You are the Prescription Safety Agent. 
-    Task: Recommend safe OTC medications, specify dosages, and provide real-time estimated market prices.
-    You must use the googleSearch tool to find current pricing for recommended medications in retail pharmacies.
-    
-    UNCERTAINTY HANDLING: If the dosage or price is unclear from current grounding, state 'Pending Verification' and ask for the user's region or current medication list to refine results.
-
-    JSON SCHEMA REQUIREMENTS:
-    {
-      "medication": "Name of drug",
-      "dosage": "Clear dosage instructions",
-      "price": "Estimated price range (e.g., $8.50 - $12.00)",
-      "sideEffects": ["effect 1"],
-      "warnings": ["warning 1"]
-    }
-
-    ${SAFETY_INSTRUCTIONS}
+    Respond in ${userProfile.preferredLanguage}.
+    Use googleSearch for real-time prices.
+    JSON fields medication, dosage, warnings must be in ${userProfile.preferredLanguage}.
+    ${GET_SAFETY_INSTRUCTIONS(userProfile.preferredLanguage)}
   `;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: [{ role: 'user', parts: [{ text: `Provide treatment and current price estimate for: ${query}. User Allergies: ${userProfile.allergies.join(', ')}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Treatment and price for: ${query}. User Allergies: ${userProfile.allergies.join(', ')}` }] }],
     config: { 
       systemInstruction, 
       responseMimeType: "application/json",
@@ -104,21 +84,15 @@ export const prescriptionSafetyAgent = async (query: string, userProfile: UserPr
   return JSON.parse(response.text || '{}');
 };
 
-// --- Orchestration & Utility ---
-
 export const chatWithMediGenie = async (message: string, imageData: string | null, history: any[], userProfile: UserProfile) => {
   const systemInstruction = `
-    MediGenie Orchestrator. You manage a cluster of medical agents.
-    LEARNING ENGINE: If you encounter an ambiguous symptom, ask a targeted follow-up question (e.g. 'How long has the pain lasted?') to improve the diagnostic reasoning path.
-    ${SAFETY_INSTRUCTIONS}
+    MediGenie Orchestrator. Respond exclusively in ${userProfile.preferredLanguage}.
+    ${GET_SAFETY_INSTRUCTIONS(userProfile.preferredLanguage)}
   `;
   const userParts: any[] = [{ text: message }];
   if (imageData) {
     userParts.push({ 
-      inlineData: { 
-        data: imageData.split(',')[1], 
-        mimeType: 'image/jpeg' 
-      } 
+      inlineData: { data: imageData.split(',')[1], mimeType: 'image/jpeg' } 
     });
   }
   
@@ -130,7 +104,7 @@ export const chatWithMediGenie = async (message: string, imageData: string | nul
 };
 
 export const summarizeHealthMemory = async (profile: UserProfile, logs: FollowUpLog[]) => {
-  const systemInstruction = `Memory Agent. Synthesize history into a 2-3 sentence narrative. Highlight gaps in knowledge where the system needs more data for 'Active Learning'.`;
+  const systemInstruction = `Memory Agent. Respond in ${profile.preferredLanguage}.`;
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: [{ role: 'user', parts: [{ text: `Profile: ${JSON.stringify(profile)}. Logs: ${JSON.stringify(logs.slice(0, 5))}.` }] }],
@@ -140,7 +114,7 @@ export const summarizeHealthMemory = async (profile: UserProfile, logs: FollowUp
 };
 
 export const followUpAgent = async (profile: UserProfile, previousLogs: FollowUpLog[], currentUpdate: string) => {
-  const systemInstruction = `Follow-up Coordinator. Review current status against history. Use uncertainty to prompt for missing metrics (like BP or HR) if not mentioned. ${SAFETY_INSTRUCTIONS}`;
+  const systemInstruction = `Follow-up Coordinator. Respond in ${profile.preferredLanguage}. ${GET_SAFETY_INSTRUCTIONS(profile.preferredLanguage)}`;
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: [{ role: 'user', parts: [{ text: `Current: ${currentUpdate}. History: ${JSON.stringify(previousLogs.slice(0, 3))}` }] }],
@@ -149,22 +123,19 @@ export const followUpAgent = async (profile: UserProfile, previousLogs: FollowUp
   return response.text;
 };
 
-export const checkDrugInteractions = async (medications: string[]) => {
+export const checkDrugInteractions = async (medications: string[], profile: UserProfile) => {
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: [{ role: 'user', parts: [{ text: `Analyze interactions: ${medications.join(', ')}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Analyze interactions in ${profile.preferredLanguage}: ${medications.join(', ')}` }] }],
   });
   return response.text;
 };
 
-export const analyzeSymptomsAgent = async (input: string, imageData?: string) => {
-  const parts: any[] = [{ text: input }];
+export const analyzeSymptomsAgent = async (input: string, profile: UserProfile, imageData?: string) => {
+  const parts: any[] = [{ text: `Respond in ${profile.preferredLanguage}: ${input}` }];
   if (imageData) {
     parts.push({ 
-      inlineData: { 
-        data: imageData.split(',')[1], 
-        mimeType: 'image/jpeg' 
-      } 
+      inlineData: { data: imageData.split(',')[1], mimeType: 'image/jpeg' } 
     });
   }
   const response = await ai.models.generateContent({
@@ -173,18 +144,20 @@ export const analyzeSymptomsAgent = async (input: string, imageData?: string) =>
   return response.text;
 };
 
-export const parseLabReport = async (content: string | { data: string; mimeType: string }) => {
-  const parts: any[] = typeof content === 'string' ? [{ text: content }] : [{ inlineData: content }];
+export const parseLabReport = async (content: string | { data: string; mimeType: string }, profile: UserProfile) => {
+  const parts: any[] = typeof content === 'string' 
+    ? [{ text: `Simplify this in ${profile.preferredLanguage}: ${content}` }] 
+    : [{ inlineData: content }, { text: `Simplify in ${profile.preferredLanguage}` }];
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview', contents: [{ role: 'user', parts }]
   });
   return response.text;
 };
 
-export const searchMedicalInfo = async (query: string) => {
+export const searchMedicalInfo = async (query: string, profile: UserProfile) => {
   return await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: [{ role: 'user', parts: [{ text: query }] }],
+    contents: [{ role: 'user', parts: [{ text: `Search and summarize in ${profile.preferredLanguage}: ${query}` }] }],
     config: { tools: [{ googleSearch: {} }] },
   });
 };
@@ -192,7 +165,7 @@ export const searchMedicalInfo = async (query: string) => {
 export const getNextTriageStep = async (p: UserProfile, s: string, h: any[]): Promise<TriageStep> => {
   const res = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: [{ role: 'user', parts: [{ text: `Triage: ${s}. History: ${JSON.stringify(h)}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Triage in ${p.preferredLanguage}: ${s}. History: ${JSON.stringify(h)}` }] }],
     config: { responseMimeType: "application/json" },
   });
   return JSON.parse(res.text || '{}');
@@ -201,16 +174,16 @@ export const getNextTriageStep = async (p: UserProfile, s: string, h: any[]): Pr
 export const generateCarePathway = async (userProfile: UserProfile, symptoms: string, lifestyle?: any): Promise<CarePathway> => {
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: [{ role: 'user', parts: [{ text: `Pathway for: ${symptoms}. Lifestyle: ${JSON.stringify(lifestyle)}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Pathway in ${userProfile.preferredLanguage} for: ${symptoms}. Lifestyle: ${JSON.stringify(lifestyle)}` }] }],
     config: { responseMimeType: "application/json" },
   });
   return JSON.parse(response.text || '{}');
 };
 
-export const findNearbyClinics = async (s: string, lat: number, lng: number) => {
+export const findNearbyClinics = async (s: string, lat: number, lng: number, profile: UserProfile) => {
   return await ai.models.generateContent({
     model: 'gemini-2.5-flash',
-    contents: [{ role: 'user', parts: [{ text: `Find ${s} clinics near me.` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Find ${s} clinics near me. Describe results in ${profile.preferredLanguage}.` }] }],
     config: { 
       tools: [{ googleMaps: {} }], 
       toolConfig: { 

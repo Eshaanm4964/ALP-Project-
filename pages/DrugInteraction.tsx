@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { checkDrugInteractions } from '../geminiService';
 import { Pill, Plus, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { UserProfile } from '../types';
 
-const DrugInteraction: React.FC = () => {
+const DrugInteraction: React.FC<{ profile: UserProfile }> = ({ profile }) => {
   const [meds, setMeds] = useState<string[]>([]);
   const [currentMed, setCurrentMed] = useState('');
   const [result, setResult] = useState('');
@@ -24,7 +25,7 @@ const DrugInteraction: React.FC = () => {
     if (meds.length < 2) return;
     setLoading(true);
     try {
-      const data = await checkDrugInteractions(meds);
+      const data = await checkDrugInteractions(meds, profile);
       setResult(data || "Analysis failed.");
     } catch (e) {
       console.error(e);

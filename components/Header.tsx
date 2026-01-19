@@ -1,14 +1,19 @@
 
 import React, { useRef } from 'react';
 import { UserProfile } from '../types';
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search, User, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   profile: UserProfile;
+  onLanguageChange?: (lang: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ profile }) => {
+const LANGUAGES = [
+  'English', 'Spanish', 'French', 'German', 'Hindi', 'Chinese', 'Arabic', 'Japanese', 'Portuguese'
+];
+
+const Header: React.FC<HeaderProps> = ({ profile, onLanguageChange }) => {
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,6 +37,21 @@ const Header: React.FC<HeaderProps> = ({ profile }) => {
       </div>
 
       <div className="flex items-center gap-6">
+        {/* Dark Themed Multilingual Pill with White Text */}
+        <div className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-full border border-slate-700 shadow-lg shadow-slate-200/50 group hover:border-blue-500 transition-all">
+          <Globe className="w-4 h-4 text-blue-400 group-hover:animate-spin-slow" />
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black uppercase tracking-[0.2em] text-blue-400 leading-none mb-0.5">Lang</span>
+            <select 
+              className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-white appearance-none pr-1"
+              value={profile.preferredLanguage}
+              onChange={(e) => onLanguageChange?.(e.target.value)}
+            >
+              {LANGUAGES.map(lang => <option key={lang} value={lang} className="text-slate-900">{lang}</option>)}
+            </select>
+          </div>
+        </div>
+
         <div 
           className="hidden md:flex items-center bg-slate-100 rounded-full px-4 py-1.5 border border-slate-200 cursor-text hover:bg-slate-200 transition-colors"
           onClick={handleSearchClick}
@@ -63,6 +83,16 @@ const Header: React.FC<HeaderProps> = ({ profile }) => {
           </div>
         </div>
       </div>
+      
+      <style>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .group:hover .group-hover\\:animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+      `}</style>
     </header>
   );
 };

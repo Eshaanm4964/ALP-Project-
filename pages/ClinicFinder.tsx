@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { findNearbyClinics } from '../geminiService';
 import { MapPin, Search, Loader2, Navigation, ExternalLink } from 'lucide-react';
+import { UserProfile } from '../types';
 
-const ClinicFinder: React.FC = () => {
+const ClinicFinder: React.FC<{ profile: UserProfile }> = ({ profile }) => {
   const [specialty, setSpecialty] = useState('General');
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<any>(null);
@@ -23,7 +24,7 @@ const ClinicFinder: React.FC = () => {
     }
     setLoading(true);
     try {
-      const data = await findNearbyClinics(specialty, location.lat, location.lng);
+      const data = await findNearbyClinics(specialty, location.lat, location.lng, profile);
       setResponse(data);
     } catch (e) {
       console.error(e);

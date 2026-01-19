@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { searchMedicalInfo } from '../geminiService';
 import { Search, Loader2, Globe, ExternalLink, BookOpen } from 'lucide-react';
+import { UserProfile } from '../types';
 
-const MedicalSearch: React.FC = () => {
+const MedicalSearch: React.FC<{ profile: UserProfile }> = ({ profile }) => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<any>(null);
@@ -12,7 +13,7 @@ const MedicalSearch: React.FC = () => {
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const data = await searchMedicalInfo(query);
+      const data = await searchMedicalInfo(query, profile);
       setResponse(data);
     } catch (e) {
       console.error(e);

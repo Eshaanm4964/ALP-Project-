@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { parseLabReport } from '../geminiService';
 import { FileText, Upload, Trash2, Loader2, BookOpen, AlertCircle } from 'lucide-react';
+import { UserProfile } from '../types';
 
-const LabReportParser: React.FC = () => {
+const LabReportParser: React.FC<{ profile: UserProfile }> = ({ profile }) => {
   const [text, setText] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,7 @@ const LabReportParser: React.FC = () => {
       } else {
         content = text;
       }
-      const data = await parseLabReport(content);
+      const data = await parseLabReport(content, profile);
       setResult(data || "Parsing failed.");
     } catch (e) {
       console.error(e);

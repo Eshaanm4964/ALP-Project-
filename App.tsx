@@ -28,6 +28,7 @@ const INITIAL_PROFILE: UserProfile = {
   allergies: [],
   medicalHistory: '',
   healthSummary: '',
+  preferredLanguage: 'English',
   isRegistered: false,
 };
 
@@ -45,6 +46,10 @@ const App: React.FC = () => {
     setUserProfile({ ...profile, isRegistered: true });
   };
 
+  const handleLanguageChange = (lang: string) => {
+    setUserProfile({ ...userProfile, preferredLanguage: lang });
+  };
+
   if (!userProfile.isRegistered) {
     return <Onboarding onComplete={handleRegister} />;
   }
@@ -54,7 +59,7 @@ const App: React.FC = () => {
       <div className="flex h-screen bg-slate-50 overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <Header profile={userProfile} />
+          <Header profile={userProfile} onLanguageChange={handleLanguageChange} />
           <main className="flex-1 overflow-y-auto p-4 md:p-8">
             <Routes>
               <Route path="/" element={<Dashboard profile={userProfile} />} />
@@ -62,10 +67,10 @@ const App: React.FC = () => {
               <Route path="/tools" element={<Tools profile={userProfile} />} />
               <Route path="/triage" element={<SymptomTriage profile={userProfile} />} />
               <Route path="/pathway" element={<CarePathwayPage profile={userProfile} />} />
-              <Route path="/drugs" element={<DrugInteraction />} />
-              <Route path="/clinics" element={<ClinicFinder />} />
-              <Route path="/lab-parser" element={<LabReportParser />} />
-              <Route path="/med-search" element={<MedicalSearch />} />
+              <Route path="/drugs" element={<DrugInteraction profile={userProfile} />} />
+              <Route path="/clinics" element={<ClinicFinder profile={userProfile} />} />
+              <Route path="/lab-parser" element={<LabReportParser profile={userProfile} />} />
+              <Route path="/med-search" element={<MedicalSearch profile={userProfile} />} />
               <Route path="/progress" element={<HealthProgress profile={userProfile} setProfile={setUserProfile} />} />
               <Route path="/twin" element={<PatientTwin profile={userProfile} setProfile={setUserProfile} />} />
               <Route path="/profile" element={<Profile profile={userProfile} setProfile={setUserProfile} />} />

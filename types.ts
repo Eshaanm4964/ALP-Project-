@@ -30,6 +30,7 @@ export interface UserProfile {
   medicalHistory: string;
   healthSummary?: string;
   digitalTwin?: DigitalTwin; // The Patient Digital Twin model
+  preferredLanguage: string; // New field for internationalization
   isRegistered: boolean;
 }
 

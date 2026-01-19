@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { Heart, User, Activity, ShieldPlus, ChevronRight } from 'lucide-react';
+import { Heart, User, Activity, ShieldPlus, ChevronRight, Globe } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: (profile: UserProfile) => void;
@@ -18,6 +18,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     bloodGroup: 'A+',
     allergies: [],
     medicalHistory: '',
+    preferredLanguage: 'English',
     isRegistered: false,
   });
 
@@ -38,7 +39,24 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <h2 className="text-3xl font-bold mb-2">Welcome to MediGenie</h2>
           <p className="text-blue-100">Let's set up your personal health profile.</p>
           
-          <div className="flex gap-2 mt-6">
+          {/* Enhanced Language Selector in Header */}
+          <div className="mt-6 flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl border border-white/20 w-fit animate-in fade-in slide-in-from-left-4 duration-700">
+            <Globe size={18} className="text-blue-200" />
+            <div className="flex flex-col">
+              <label className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-0.5">Preferred Language</label>
+              <select
+                className="bg-transparent text-sm font-bold outline-none cursor-pointer text-white appearance-none"
+                value={formData.preferredLanguage}
+                onChange={e => setFormData({ ...formData, preferredLanguage: e.target.value })}
+              >
+                {['English', 'Spanish', 'French', 'German', 'Hindi', 'Chinese', 'Arabic', 'Japanese', 'Portuguese'].map(lang => (
+                  <option key={lang} value={lang} className="text-slate-900">{lang}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 mt-8">
             {[1, 2, 3].map(s => (
               <div 
                 key={s} 
@@ -56,7 +74,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 <h3>Personal Information</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                   <input
                     required
@@ -89,7 +107,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     <option>Prefer not to say</option>
                   </select>
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
                   <select
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"
