@@ -118,7 +118,7 @@ const PatientTwin: React.FC<{ profile: UserProfile, setProfile: (p: UserProfile)
 
               {/* Trajectories Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {twin.trajectories.map((t, i) => (
+                {twin.trajectories?.map((t, i) => (
                   <div key={i} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 group hover:shadow-2xl transition-all">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
@@ -131,7 +131,7 @@ const PatientTwin: React.FC<{ profile: UserProfile, setProfile: (p: UserProfile)
                     </div>
                     <div className="h-[220px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={t.values.map((v, idx) => ({ value: v, date: t.dates[idx] }))}>
+                        <AreaChart data={t.values?.map((v, idx) => ({ value: v, date: t.dates?.[idx] })) || []}>
                           <defs>
                             <linearGradient id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25}/>
@@ -238,7 +238,7 @@ const PatientTwin: React.FC<{ profile: UserProfile, setProfile: (p: UserProfile)
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Drug-Response Sensitivity</p>
             </div>
             <div className="space-y-6">
-              {twin?.medicationResponses.map((m, i) => (
+              {twin?.medicationResponses?.map((m, i) => (
                 <div key={i} className="bg-slate-50 p-6 rounded-[1.75rem] border border-slate-100 space-y-4 relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-24 h-24 bg-slate-200/20 rounded-full -mr-12 -mt-12"></div>
                   <div className="flex items-center justify-between relative z-10">

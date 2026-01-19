@@ -129,7 +129,7 @@ const CarePathwayPage: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                 <Info className="text-blue-600" /> Potential Causes
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {pathway.potentialCauses.map((cause, i) => (
+                {pathway.potentialCauses?.map((cause, i) => (
                   <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-slate-900">{cause.title}</h4>
@@ -150,7 +150,7 @@ const CarePathwayPage: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                   <div className="space-y-3">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Immediate Actions</p>
                     <ul className="space-y-2">
-                      {pathway.immediateActions.map((action, i) => (
+                      {pathway.immediateActions?.map((action, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                           <CheckCircle2 className="text-blue-500 shrink-0 mt-0.5" size={16} /> {action}
                         </li>
@@ -160,7 +160,7 @@ const CarePathwayPage: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                   <div className="space-y-3">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ongoing Management</p>
                     <ul className="space-y-2">
-                      {pathway.homeCareSteps.map((step, i) => (
+                      {pathway.homeCareSteps?.map((step, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                           <div className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0 mt-1.5" /> {step}
                         </li>
@@ -179,7 +179,7 @@ const CarePathwayPage: React.FC<{ profile: UserProfile }> = ({ profile }) => {
               </h3>
               <p className="text-xs text-rose-700 font-medium">Seek medical attention immediately if you experience:</p>
               <ul className="space-y-2">
-                {pathway.redFlags.map((flag, i) => (
+                {pathway.redFlags?.map((flag, i) => (
                   <li key={i} className="text-sm text-rose-800 font-bold flex items-start gap-2">
                     <span className="shrink-0">•</span> {flag}
                   </li>

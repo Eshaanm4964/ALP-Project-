@@ -121,7 +121,7 @@ const SymptomTriage: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                     <div className="space-y-2">
                       <p className="text-sm font-bold text-slate-700">Possible Conditions:</p>
                       <div className="flex flex-wrap gap-2">
-                        {currentStep.result?.potentialConditions.map((c, i) => (
+                        {currentStep.result?.potentialConditions?.map((c, i) => (
                           <span key={i} className="bg-white border px-3 py-1 rounded-full text-xs text-slate-600 font-medium">
                             {c}
                           </span>

@@ -90,7 +90,7 @@ const PrescriptionCard = ({ rec }: { rec: ChatMessage['recommendation'] }) => {
               <AlertTriangle size={14} /> Critical Warnings
             </p>
             <ul className="space-y-2 pl-1">
-              {rec.warnings.map((w, i) => (
+              {rec.warnings?.map((w, i) => (
                 <li key={i} className="text-[11px] text-slate-700 flex items-start gap-2.5 font-semibold italic">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0 animate-pulse" /> {w}
                 </li>
@@ -285,7 +285,7 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-10 space-y-12 bg-slate-50/10 scroll-smooth" ref={scrollRef}>
-        {messages.map((m, i) => (
+        {messages?.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-5 duration-500`}>
             <div className={`flex gap-6 max-w-[92%] ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-2xl border ${
@@ -315,7 +315,7 @@ const Chat: React.FC<{ profile: UserProfile }> = ({ profile }) => {
                         <Globe size={14} className="text-blue-500" /> Grounding Evidence
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {m.sources.map((s, idx) => (
+                        {m.sources?.map((s, idx) => (
                           <a 
                             key={idx} 
                             href={s.uri} 
